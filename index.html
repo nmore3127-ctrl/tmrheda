@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smart URL Notepad</title>
+
+<style>
+:root{
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --text:#222;
+    --muted:#666;
+    --border:#dcdcdc;
+    --primary:#2563eb;
+    --visited:#8b5cf6;
+    --badge:#1f2937;
+    --badgeText:#fff;
+}
+
+@media (prefers-color-scheme:dark){
+
+:root{
+    --bg:#0f1115;
+    --card:#1a1d24;
+    --text:#f2f2f2;
+    --muted:#9ca3af;
+    --border:#31343d;
+    --primary:#60a5fa;
+    --visited:#c084fc;
+    --badge:#374151;
+    --badgeText:#fff;
+}
+
+}
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+background:var(--bg);
+color:var(--text);
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+.card{
+background:var(--card);
+border:1px solid var(--border);
+border-radius:12px;
+padding:20px;
+box-shadow:0 10px 20px rgba(0,0,0,.08);
+}
+
+h1{
+margin-bottom:15px;
+text-align:center;
+}
+
+textarea{
+width:100%;
+height:180px;
+padding:15px;
+border-radius:10px;
+border:1px solid var(--border);
+background:transparent;
+color:var(--text);
+resize:vertical;
+font-size:15px;
+}
+
+.buttons{
+display:flex;
+gap:10px;
+margin-top:15px;
+flex-wrap:wrap;
+}
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.process{
+background:#2563eb;
+color:white;
+}
+
+.copy{
+background:#16a34a;
+color:white;
+}
+
+.clear{
+background:#dc2626;
+color:white;
+}
+
+#status{
+margin-top:12px;
+font-size:14px;
+color:var(--muted);
+}
+
+.output{
+margin-top:25px;
+}
+
+ol{
+padding-left:25px;
+}
+
+li{
+margin-bottom:14px;
+line-height:1.7;
+word-break:break-word;
+}
+
+a{
+color:var(--primary);
+text-decoration:none;
+}
+
+a:hover{
+text-decoration:underline;
+}
+
+a.visited{
+color:var(--visited);
+}
+
+.badge{
+display:inline-block;
+margin-left:10px;
+background:var(--badge);
+color:var(--badgeText);
+padding:3px 8px;
+border-radius:30px;
+font-size:12px;
+}
+
+@media(max-width:600px){
+
+button{
+width:100%;
+}
+
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>Smart URL Notepad</h1>
+
+<textarea id="input"
+placeholder="Paste URLs separated by commas, spaces or new lines..."></textarea>
+
+<div class="buttons">
+
+<button class="process" onclick="processLinks()">Process Links</button>
+
+<button class="copy" onclick="copyFormatted()">Copy All Formatted Links</button>
+
+<button class="clear" onclick="clearAll()">Clear</button>
+
+</div>
+
+<div id="status"></div>
+
+<div class="output">
+<ol id="list"></ol>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const visitData={};
+
+function processLinks(){
+
+const input=document.getElementById("input").value;
+
+const urls=input.match(/https?:\/\/[^\s,]+/gi)||[];
+
+const unique=[];
+
+urls.forEach(u=>{
+
+u=u.trim();
+
+if(!unique.includes(u))
+unique.push(u);
+
+});
+
+const list=document.getElementById("list");
+
+list.innerHTML="";
+
+unique.forEach((url,index)=>{
+
+if(!(url in visitData)){
+visitData[url]=0;
+}
+
+const li=document.createElement("li");
+
+const a=document.createElement("a");
+
+a.href=url;
+a.target="_blank";
+a.rel="noopener";
+
+a.textContent=url;
+
+if(visitData[url]>0){
+a.classList.add("visited");
+}
+
+const badge=document.createElement("span");
+
+badge.className="badge";
+
+badge.textContent="Visited: "+visitData[url];
+
+a.addEventListener("click",function(){
+
+visitData[url]++;
+
+badge.textContent="Visited: "+visitData[url];
+
+a.classList.add("visited");
+
+});
+
+li.appendChild(a);
+
+li.appendChild(badge);
+
+list.appendChild(li);
+
+});
+
+document.getElementById("status").textContent=
+unique.length+" link(s) processed.";
+
+}
+
+async function copyFormatted(){
+
+const list=document.querySelectorAll("#list li");
+
+if(list.length===0){
+
+alert("No processed links.");
+
+return;
+
+}
+
+let text="";
+
+list.forEach((item,index)=>{
+
+const url=item.querySelector("a").href;
+
+text+=(index+1)+". "+url+"\n";
+
+});
+
+try{
+
+await navigator.clipboard.writeText(text);
+
+document.getElementById("status").textContent="Formatted list copied.";
+
+}catch(e){
+
+alert("Clipboard permission denied.");
+
+}
+
+}
+
+function clearAll(){
+
+document.getElementById("input").value="";
+
+document.getElementById("list").innerHTML="";
+
+document.getElementById("status").textContent="";
+
+}
+
+</script>
+
+</body>
+</html>
